@@ -3,7 +3,7 @@
 
 import { expect } from 'chai';
 import { after } from 'lodash';
-import { describe, beforeEach, it } from 'mocha';
+import { describe, beforeEach, after as mochaAfter, it } from 'mocha';
 import * as IORedis from 'ioredis';
 import { v4 } from 'uuid';
 import {
@@ -18,7 +18,7 @@ import { delay, removeAllQueueData } from '../src/utils';
 describe('Jobs getters', function () {
   let queue: Queue;
   let queueName: string;
-  const connection = { host: 'localhost' };
+  const connection =  new IORedis( { maxRetriesPerRequest: null} )
 
   beforeEach(async function () {
     queueName = `test-${v4()}`;
@@ -28,6 +28,11 @@ describe('Jobs getters', function () {
   afterEach(async function () {
     await queue.close();
     await removeAllQueueData(new IORedis(), queueName);
+  });
+
+
+  mochaAfter(async function () {
+    await connection.quit()
   });
 
   describe('.getQueueEvents', () => {
@@ -72,7 +77,7 @@ describe('Jobs getters', function () {
     });
   });
 
-  describe('.getWorkers', () => {
+  describe.only('.getWorkers', () => {
     it('gets all workers for this queue only', async function () {
       const worker = new Worker(queueName, async () => {}, { connection });
       const queueScheduler = new QueueScheduler(queueName, { connection });
